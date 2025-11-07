@@ -52,7 +52,7 @@ export async function GET() {
     let partnerPaid = 0
     let splitAmount = 0
 
-    sharedTransactions.forEach((tx) => {
+    sharedTransactions.forEach((tx: typeof sharedTransactions[0]) => {
       const amount = tx.amount
 
       if (tx.paidBy === "split") {
