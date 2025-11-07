@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  categories    Category[]
+  transactions  Transaction[]
+  
+  // Partner linking - user can send or receive invites
+  sentInvites     PartnerLink[] @relation("InviteSender")
+  receivedInvites PartnerLink[] @relation("InviteReceiver")
+  
+  // Track active partner
+  activePartnerId String? @unique
+  activePartner   PartnerLink? @relation("ActivePartner", fields: [activePartnerId], references: [id])
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String
+  createdAt DateTime @default(now())
+  
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+  
+  @@unique([userId, name])
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  amount      Float
+  description String
+  date        DateTime
+  categoryId  String
+  userId      String
+  createdAt   DateTime @default(now())
+  
+  // Couple mode fields
+  isShared    Boolean  @default(false)
+  paidBy      String?  // userId of who paid, or "split" for 50/50
+  
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, date])
+  @@index([userId, isShared])
+}
+
+model PartnerLink {
+  id         String   @id @default(cuid())
+  user1Id    String
+  user2Id    String
+  status     String   @default("pending") // pending, accepted, rejected
+  invitedBy  String
+  createdAt  DateTime @default(now())
+  acceptedAt DateTime?
+  
+  user1       User @relation("InviteSender", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2       User @relation("InviteReceiver", fields: [user2Id], references: [id], onDelete: Cascade)
+  
+  // Active partner tracking
+  activeFor User? @relation("ActivePartner")
+  
+  @@unique([user1Id, user2Id])
+}

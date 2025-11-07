@@ -1,26 +1,190 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 243 75% 60%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 243 75% 60%;
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 243 75% 60%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 243 75% 60%;
   }
 }
 
+/* Custom Styles */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  background: radial-gradient(120% 120% at 10% 10%, hsl(var(--background)) 0%, hsl(var(--muted)) 45%, hsl(var(--muted)) 100%);
+  font-family: var(--font-geist-sans), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.55;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  color: hsl(var(--foreground));
 }
+
+.dark body {
+  background: radial-gradient(120% 120% at 10% 10%, hsl(var(--background)) 0%, hsl(217.2 32.6% 12%) 45%, hsl(217.2 32.6% 8%) 100%);
+}
+
+.glass-card {
+  border-radius: 1.75rem;
+  border: 1px solid hsl(var(--border) / 0.5);
+  background: linear-gradient(135deg, hsl(var(--card) / 0.95) 0%, hsl(var(--muted) / 0.85) 100%);
+  box-shadow: 0 25px 40px hsl(var(--foreground) / 0.08);
+  -webkit-backdrop-filter: blur(28px);
+  backdrop-filter: blur(28px);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 30px 50px hsl(var(--foreground) / 0.12);
+}
+
+.section-title {
+  font-size: clamp(1.5rem, 2vw + 0.5rem, 2.5rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.hero-blob-lg {
+  width: 36rem;
+  height: 36rem;
+  animation: float 6s ease-in-out infinite;
+}
+
+.hero-blob-md {
+  width: 28rem;
+  height: 28rem;
+  animation: float 8s ease-in-out infinite;
+  animation-delay: 1s;
+}
+
+.card-divider {
+  height: 1px;
+  width: 100%;
+  background: linear-gradient(90deg, transparent 0%, hsl(var(--border)) 50%, transparent 100%);
+}
+
+/* Badge styles */
+.badge-soft {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 9999px;
+  background: hsl(var(--primary) / 0.12);
+  color: hsl(var(--primary));
+  border: 1px solid hsl(var(--primary) / 0.2);
+  transition: all 0.3s ease;
+}
+
+.badge-soft:hover {
+  background: hsl(var(--primary) / 0.2);
+}
+
+.badge-soft[data-variant="plum"] {
+  background: hsl(270 100% 85% / 0.22);
+  color: hsl(270 91% 35%);
+  border-color: hsl(270 95% 60% / 0.25);
+}
+
+.dark .badge-soft[data-variant="plum"] {
+  background: hsl(270 100% 85% / 0.15);
+  color: hsl(270 100% 75%);
+}
+
+.badge-soft[data-variant="slate"] {
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  border-color: hsl(var(--border));
+}
+
+/* Input styles */
+.input-soft {
+  width: 100%;
+  border-radius: 1.1rem;
+  border: 1px solid hsl(var(--input));
+  background: hsl(var(--background));
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  color: hsl(var(--foreground));
+  transition: border 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.input-soft:focus {
+  outline: none;
+  border-color: hsl(var(--ring));
+  background: hsl(var(--card));
+  box-shadow: 0 0 0 4px hsl(var(--ring) / 0.18);
+}
+
+/* Accessibility improvements */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Focus visible styles for keyboard navigation */
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection color */
+::selection {
+  background-color: hsl(var(--primary) / 0.3);
+  color: hsl(var(--foreground));
+}
+
+
+
