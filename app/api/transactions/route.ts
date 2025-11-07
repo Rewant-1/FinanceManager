@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client"
 import { NextResponse } from "next/server"
 
 import { getServerAuthSession } from "@/auth"
@@ -17,8 +16,16 @@ export async function GET(req: Request) {
     const startDate = searchParams.get("startDate")
     const endDate = searchParams.get("endDate")
 
-    const where: Prisma.TransactionWhereInput = {
+    const where = {
       userId: session.user.id,
+    } as {
+      userId: string
+      categoryId?: string
+      isShared?: boolean
+      date?: {
+        gte?: Date
+        lte?: Date
+      }
     }
 
     if (categoryId) {
