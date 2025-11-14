@@ -8,7 +8,7 @@ import { toast } from "sonner"
 import { 
   LogOut, Settings, Tags, Plus, Trash2, 
   Filter, TrendingUp, DollarSign, Users,
-  Calendar, User, CreditCard
+  Calendar, User, CreditCard, BarChart3
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -76,7 +76,6 @@ export default function Dashboard() {
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
   const [showAddForm, setShowAddForm] = useState(false)
-  const [error, setError] = useState("")
   const [isCoupleMode, setIsCoupleMode] = useState(false)
   const [currentUserId, setCurrentUserId] = useState("")
   const [balanceInfo, setBalanceInfo] = useState<BalanceInfo | null>(null)
@@ -172,10 +171,8 @@ export default function Dashboard() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError("")
 
     if (!formData.amount || !formData.description || !formData.categoryId) {
-      setError("Please fill in all required fields")
       toast.error("Please fill in all required fields")
       return
     }
@@ -193,7 +190,6 @@ export default function Dashboard() {
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error || "Failed to create transaction")
         toast.error(data.error || "Failed to create transaction")
         return
       }
@@ -214,7 +210,6 @@ export default function Dashboard() {
         fetchBalance()
       }
     } catch (err) {
-      setError("Something went wrong")
       toast.error("Something went wrong")
       console.error(err)
     }
@@ -262,8 +257,8 @@ export default function Dashboard() {
   return (
     <div className="relative min-h-screen px-6 pb-24 pt-24 sm:px-10">
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="hero-blob-lg absolute -left-24 top-20 rounded-full bg-gradient-to-br from-primary/20 via-purple-500/10 to-transparent blur-3xl" />
-        <div className="hero-blob-md absolute right-[-140px] bottom-0 rounded-full bg-gradient-to-br from-pink-500/15 via-blue-500/15 to-transparent blur-3xl" />
+        <div className="hero-blob-lg absolute -left-24 top-20 rounded-full bg-gradient-to-br from-primary/20 via-emerald-500/10 to-transparent blur-3xl" />
+        <div className="hero-blob-md absolute right-[-140px] bottom-0 rounded-full bg-gradient-to-br from-teal-500/15 via-cyan-500/15 to-transparent blur-3xl" />
       </div>
 
       <motion.div
@@ -281,7 +276,7 @@ export default function Dashboard() {
                   <div className="flex items-center gap-2">
                     <CreditCard className="h-5 w-5 text-primary" />
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Couple&apos;s expense hub
+                      OurStory
                     </p>
                   </div>
                   <CardTitle className="text-3xl">Dashboard</CardTitle>
@@ -293,6 +288,12 @@ export default function Dashboard() {
                   <span className={`badge-soft ${isCoupleMode ? 'data-[variant="plum"]' : 'data-[variant="slate"]'}`} data-variant={isCoupleMode ? "plum" : "slate"}>
                     {isCoupleMode ? "Couple mode" : "Personal mode"}
                   </span>
+                  <Button variant="secondary" asChild>
+                    <Link href="/analytics">
+                      <BarChart3 className="mr-2 h-4 w-4" />
+                      Analytics
+                    </Link>
+                  </Button>
                   <Button variant="secondary" asChild>
                     <Link href="/categories">
                       <Tags className="mr-2 h-4 w-4" />
@@ -328,7 +329,7 @@ export default function Dashboard() {
               exit={{ opacity: 0, y: -20 }}
               variants={itemVariants}
             >
-              <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-purple-500/5 to-pink-500/5">
+              <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-emerald-500/5 to-teal-500/5">
                 <CardHeader>
                   <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="space-y-2">
@@ -419,7 +420,7 @@ export default function Dashboard() {
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Total tracked
                       </p>
-                      <p className="text-3xl font-semibold bg-gradient-to-br from-primary to-purple-500 bg-clip-text text-transparent">
+                      <p className="text-3xl font-semibold bg-gradient-to-br from-primary to-emerald-500 bg-clip-text text-transparent">
                         {currencyFormatter.format(totalAmount)}
                       </p>
                     </div>

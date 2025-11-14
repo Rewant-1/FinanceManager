@@ -1,6 +1,6 @@
-# 💑 Couple's Expense Hub
+# 💑 OurStory
 
-A gorgeous, elegant personal and shared expense tracker built for couples. Track personal spending, share costs effortlessly, and keep your finances beautifully balanced.
+A gorgeous, elegant personal and shared expense tracker built for couples. Track personal spending, share costs effortlessly, and keep your finances beautifully balanced with powerful analytics and insights.
 
 ![Next.js](https://img.shields.io/badge/Next.js-16.0-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
@@ -12,8 +12,10 @@ A gorgeous, elegant personal and shared expense tracker built for couples. Track
 ### 🎨 Beautiful UI
 - **shadcn/ui** components for a polished, accessible interface
 - **Aceternity UI** components for stunning visual effects
-- Glass-morphism design with gradient backgrounds
+- **Recharts** for beautiful data visualizations
+- Glass-morphism design with teal/emerald gradient backgrounds
 - Smooth animations powered by Framer Motion
+- Advanced microanimations and hover effects
 - Dark mode support with seamless theme switching
 
 ### 💰 Expense Management
@@ -23,6 +25,14 @@ A gorgeous, elegant personal and shared expense tracker built for couples. Track
 - Transaction filtering (by category, shared/personal)
 - Real-time balance calculations
 - Automatic settlement suggestions
+
+### 📊 Analytics & Insights
+- **Monthly spending trends** with interactive line charts
+- **Transaction volume** tracking with bar charts
+- **Category breakdown** with beautiful pie charts
+- **Top spending categories** visualization
+- **Summary statistics** including total spent, average transaction, and month-over-month changes
+- **Detailed category analysis** with color-coded insights
 
 ### 👥 Couple Features
 - Partner invitation system
@@ -50,6 +60,7 @@ A gorgeous, elegant personal and shared expense tracker built for couples. Track
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS 4
 - **UI Components:** shadcn/ui + Aceternity UI
+- **Charts:** Recharts
 - **Animations:** Framer Motion
 - **Database:** PostgreSQL (via Prisma)
 - **Auth:** NextAuth.js
@@ -122,6 +133,16 @@ NEXTAUTH_URL="http://localhost:3000"
 - Quick filters
 - Add transaction form
 - Real-time updates
+- Navigation to Analytics
+
+### Analytics (`/analytics`)
+- Monthly spending trends line chart
+- Transaction volume bar charts
+- Category breakdown pie charts
+- Top spending categories visualization
+- Summary statistics cards
+- Detailed category analysis table
+- Interactive data tooltips
 
 ### Categories (`/categories`)
 - CRUD operations for categories
@@ -202,14 +223,15 @@ npm run build
 
 ## 📈 Future Enhancements
 
-- [ ] Chart visualizations for spending trends
+- [ ] Advanced filtering and date ranges
 - [ ] Export to CSV/PDF
-- [ ] Budget tracking
+- [ ] Budget tracking and alerts
 - [ ] Receipt photo uploads
 - [ ] Email notifications
 - [ ] Multi-currency support
 - [ ] Recurring transactions
 - [ ] Custom split percentages
+- [ ] Mobile app (React Native)
 
 ## 🤝 Contributing
 
@@ -223,6 +245,7 @@ This project is licensed under the MIT License.
 
 - [shadcn/ui](https://ui.shadcn.com) for the beautiful component library
 - [Aceternity UI](https://ui.aceternity.com) for stunning UI components
+- [Recharts](https://recharts.org) for powerful data visualizations
 - [Framer Motion](https://www.framer.com/motion/) for smooth animations
 - [next-themes](https://github.com/pacocoursey/next-themes) for theme management
 - [Sonner](https://sonner.emilkowal.ski/) for toast notifications
@@ -230,3 +253,5 @@ This project is licensed under the MIT License.
 ---
 
 Built with ❤️ for couples who want to keep their finances transparent and stress-free.
+
+**OurStory** - Where every expense tells a story.

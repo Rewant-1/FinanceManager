@@ -8,7 +8,7 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 243 75% 60%;
+    --primary: 173 80% 40%;
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -20,8 +20,13 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 243 75% 60%;
+    --ring: 173 80% 40%;
     --radius: 1rem;
+    --chart-1: 173 80% 40%;
+    --chart-2: 160 84% 39%;
+    --chart-3: 43 74% 66%;
+    --chart-4: 27 87% 67%;
+    --chart-5: 10 79% 63%;
   }
 
   .dark {
@@ -31,7 +36,7 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 243 75% 60%;
+    --primary: 173 80% 40%;
     --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -43,7 +48,12 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 243 75% 60%;
+    --ring: 173 80% 40%;
+    --chart-1: 173 80% 40%;
+    --chart-2: 160 84% 39%;
+    --chart-3: 43 74% 66%;
+    --chart-4: 27 87% 67%;
+    --chart-5: 10 79% 63%;
   }
 }
 
@@ -65,15 +75,15 @@ body {
   border-radius: 1.75rem;
   border: 1px solid hsl(var(--border) / 0.5);
   background: linear-gradient(135deg, hsl(var(--card) / 0.95) 0%, hsl(var(--muted) / 0.85) 100%);
-  box-shadow: 0 25px 40px hsl(var(--foreground) / 0.08);
+  box-shadow: 0 25px 40px hsl(var(--foreground) / 0.08), 0 10px 15px hsl(var(--foreground) / 0.05);
   -webkit-backdrop-filter: blur(28px);
   backdrop-filter: blur(28px);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 30px 50px hsl(var(--foreground) / 0.12);
+  transform: translateY(-4px);
+  box-shadow: 0 35px 60px hsl(var(--foreground) / 0.12), 0 15px 25px hsl(var(--foreground) / 0.08);
 }
 
 .section-title {
@@ -93,6 +103,18 @@ body {
   height: 28rem;
   animation: float 8s ease-in-out infinite;
   animation-delay: 1s;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  33% {
+    transform: translateY(-20px) translateX(10px);
+  }
+  66% {
+    transform: translateY(-10px) translateX(-10px);
+  }
 }
 
 .card-divider {
@@ -121,14 +143,14 @@ body {
 }
 
 .badge-soft[data-variant="plum"] {
-  background: hsl(270 100% 85% / 0.22);
-  color: hsl(270 91% 35%);
-  border-color: hsl(270 95% 60% / 0.25);
+  background: hsl(173 80% 85% / 0.22);
+  color: hsl(173 91% 25%);
+  border-color: hsl(173 95% 40% / 0.25);
 }
 
 .dark .badge-soft[data-variant="plum"] {
-  background: hsl(270 100% 85% / 0.15);
-  color: hsl(270 100% 75%);
+  background: hsl(173 80% 85% / 0.15);
+  color: hsl(173 100% 65%);
 }
 
 .badge-soft[data-variant="slate"] {
@@ -185,6 +207,22 @@ html {
   background-color: hsl(var(--primary) / 0.3);
   color: hsl(var(--foreground));
 }
+
+/* Dynamic category color badges */
+[data-color] {
+  position: relative;
+  overflow: hidden;
+}
+
+[data-color]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: var(--category-color, hsl(var(--primary)));
+  opacity: 1;
+}
+
+
 
 
 
