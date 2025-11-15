@@ -15,9 +15,13 @@ function ensureEnv(key: string, devFallback?: string) {
   return value
 }
 
+const databaseUrl = ensureEnv("DATABASE_URL", "file:./dev.db")
+const directDatabaseUrl = process.env.DIRECT_DATABASE_URL ?? databaseUrl
+
 export const env = {
   NODE_ENV,
   isProduction,
-  DATABASE_URL: ensureEnv("DATABASE_URL", "file:./dev.db"),
+  DATABASE_URL: databaseUrl,
+  DIRECT_DATABASE_URL: directDatabaseUrl,
   NEXTAUTH_SECRET: ensureEnv("NEXTAUTH_SECRET", randomBytes(32).toString("hex")),
 }
