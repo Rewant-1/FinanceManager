@@ -21,6 +21,7 @@ model User {
   // Relations
   categories    Category[]
   transactions  Transaction[]
+  settlements   Settlement[] @relation("SettlementInitiator")
   
   // Partner linking - user can send or receive invites
   sentInvites     PartnerLink[] @relation("InviteSender")
@@ -38,6 +39,7 @@ model Category {
   createdAt DateTime @default(now())
   
   user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  image         String?
   transactions Transaction[]
   
   @@unique([userId, name])
@@ -55,12 +57,15 @@ model Transaction {
   // Couple mode fields
   isShared    Boolean  @default(false)
   paidBy      String?  // userId of who paid, or "split" for 50/50
+  settlementId String?
   
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  settlement Settlement? @relation(fields: [settlementId], references: [id], onDelete: SetNull)
   
   @@index([userId, date])
   @@index([userId, isShared])
+  @@index([settlementId])
 }
 
 model PartnerLink {
@@ -77,6 +82,22 @@ model PartnerLink {
   
   // Active partner tracking
   activeFor User? @relation("ActivePartner")
+  settlements Settlement[]
   
   @@unique([user1Id, user2Id])
+}
+
+model Settlement {
+  id              String   @id @default(cuid())
+  partnerLinkId   String
+  settledById     String
+  balanceSnapshot Float
+  createdAt       DateTime @default(now())
+
+  partnerLink PartnerLink @relation(fields: [partnerLinkId], references: [id], onDelete: Cascade)
+  settledBy   User        @relation("SettlementInitiator", fields: [settledById], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@index([partnerLinkId])
+  @@index([settledById])
 }

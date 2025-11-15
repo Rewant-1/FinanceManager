@@ -16,6 +16,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ModeToggle } from "@/components/mode-toggle"
+import { PatternBackdrop } from "@/components/ui/pattern-backdrop"
+import { cn } from "@/lib/utils"
 
 type Category = {
   id: string
@@ -35,6 +37,18 @@ type Transaction = {
     name: string | null
     email: string
   }
+  settlementId?: string | null
+}
+
+type SettlementSummary = {
+  id: string
+  balanceSnapshot: number
+  createdAt: string
+  settledBy: {
+    id: string
+    name: string | null
+    email: string
+  }
 }
 
 type BalanceInfo = {
@@ -42,13 +56,18 @@ type BalanceInfo = {
   myPaid: number
   partnerPaid: number
   balance: number
+  splitAmount: number
   partnerInfo: {
     id: string
     name: string | null
     email: string
   }
   transactionCount: number
+  partnerLinkId?: string
+  recentSettlements?: SettlementSummary[]
 }
+
+type ViewMode = "all" | "personal" | "shared"
 
 const currencyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -78,11 +97,14 @@ export default function Dashboard() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [isCoupleMode, setIsCoupleMode] = useState(false)
   const [currentUserId, setCurrentUserId] = useState("")
+  const [currentUserName, setCurrentUserName] = useState("")
   const [balanceInfo, setBalanceInfo] = useState<BalanceInfo | null>(null)
+  const [settling, setSettling] = useState(false)
 
   // Filter states
   const [selectedCategory, setSelectedCategory] = useState<string>("")
-  const [viewFilter, setViewFilter] = useState<string>("all")
+  const [viewMode, setViewMode] = useState<ViewMode>("personal")
+  const [dateRange, setDateRange] = useState({ start: "", end: "" })
 
   // Form states
   const [formData, setFormData] = useState({
@@ -95,10 +117,14 @@ export default function Dashboard() {
   })
 
   useEffect(() => {
-    fetchData()
     fetchPartnerStatus()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategory, viewFilter])
+  }, [])
+
+  useEffect(() => {
+    fetchData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory, viewMode, dateRange.start, dateRange.end])
 
   async function fetchPartnerStatus() {
     try {
@@ -106,9 +132,12 @@ export default function Dashboard() {
       if (res.ok) {
         const data = await res.json()
         setIsCoupleMode(data.isCoupleMode)
-        
+
         if (data.isCoupleMode) {
+          setViewMode((prev) => (prev === "personal" ? "all" : prev))
           fetchBalance()
+        } else {
+          setViewMode("personal")
         }
       }
     } catch (err) {
@@ -150,6 +179,9 @@ export default function Dashboard() {
         const sessionData = await sessionRes.json()
         if (sessionData?.user?.id) {
           setCurrentUserId(sessionData.user.id)
+          setCurrentUserName(
+            sessionData.user.name || sessionData.user.email || "You"
+          )
         }
       }
     } catch (err) {
@@ -163,10 +195,18 @@ export default function Dashboard() {
   function buildTransactionUrl() {
     const params = new URLSearchParams()
     if (selectedCategory) params.append("categoryId", selectedCategory)
-    if (viewFilter === "shared") params.append("isShared", "true")
-    if (viewFilter === "personal") params.append("isShared", "false")
+    if (dateRange.start) params.append("startDate", dateRange.start)
+    if (dateRange.end) params.append("endDate", dateRange.end)
+    if (viewMode !== "all") params.append("viewMode", viewMode)
 
-    return `/api/transactions?${params.toString()}`
+    const query = params.toString()
+    return query ? `/api/transactions?${query}` : "/api/transactions"
+  }
+
+  function resetFilters() {
+    setSelectedCategory("")
+    setDateRange({ start: "", end: "" })
+    setViewMode(isCoupleMode ? "all" : "personal")
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -234,10 +274,41 @@ export default function Dashboard() {
     }
   }
 
+  async function handleSettleUp() {
+    if (!isCoupleMode || settling) return
+    setSettling(true)
+    try {
+      const res = await fetch("/api/settlements", { method: "POST" })
+      const data = await res.json()
+
+      if (!res.ok) {
+        toast.error(data.error || "Unable to settle right now")
+        return
+      }
+
+      toast.success("All shared entries have been marked as settled")
+      fetchData()
+      fetchBalance()
+    } catch (error) {
+      console.error("Error settling balance:", error)
+      toast.error("Unable to settle right now")
+    } finally {
+      setSettling(false)
+    }
+  }
+
   const totalAmount = transactions.reduce((sum, tx) => sum + tx.amount, 0)
   const partnerName = balanceInfo?.partnerInfo
     ? balanceInfo.partnerInfo.name || balanceInfo.partnerInfo.email
     : "Partner"
+  const partnerId = balanceInfo?.partnerInfo?.id || null
+  const settlementHistory = balanceInfo?.recentSettlements ?? []
+
+  const viewOptions: { value: ViewMode; label: string; description: string }[] = [
+    { value: "all", label: "All", description: "Personal + shared" },
+    { value: "shared", label: "Shared", description: "Only together" },
+    { value: "personal", label: "Mine", description: "Private only" },
+  ]
 
   if (loading) {
     return (
@@ -257,9 +328,15 @@ export default function Dashboard() {
   return (
     <div className="relative min-h-screen px-6 pb-24 pt-24 sm:px-10">
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="hero-blob-lg absolute -left-24 top-20 rounded-full bg-gradient-to-br from-primary/20 via-emerald-500/10 to-transparent blur-3xl" />
-        <div className="hero-blob-md absolute right-[-140px] bottom-0 rounded-full bg-gradient-to-br from-teal-500/15 via-cyan-500/15 to-transparent blur-3xl" />
+        <div className="hero-blob-lg absolute -left-24 top-20 rounded-full bg-linear-to-br from-primary/20 via-emerald-500/10 to-transparent blur-3xl" />
+        <div className="hero-blob-md absolute right-[-140px] bottom-0 rounded-full bg-linear-to-br from-teal-500/15 via-cyan-500/15 to-transparent blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,hsla(173,80%,32%,0.18),transparent_65%)]" />
       </div>
+      <PatternBackdrop
+        rounded={false}
+        className="hidden lg:block opacity-60"
+        overlayClassName="from-emerald-500/20 via-transparent to-[#02150f]/90"
+      />
 
       <motion.div
         className="relative mx-auto flex w-full max-w-7xl flex-col gap-8"
@@ -329,7 +406,7 @@ export default function Dashboard() {
               exit={{ opacity: 0, y: -20 }}
               variants={itemVariants}
             >
-              <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-emerald-500/5 to-teal-500/5">
+              <Card className="border-primary/20 bg-linear-to-br from-primary/5 via-emerald-500/5 to-teal-500/5">
                 <CardHeader>
                   <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="space-y-2">
@@ -395,7 +472,49 @@ export default function Dashboard() {
                     ) : (
                       <span className="font-semibold">All settled - keep gliding together!</span>
                     )}
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-xs text-muted-foreground">
+                        {balanceInfo.transactionCount} unsettled shared {balanceInfo.transactionCount === 1 ? "entry" : "entries"}
+                      </p>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={settling || balanceInfo.transactionCount === 0}
+                        onClick={handleSettleUp}
+                      >
+                        {settling ? "Settling..." : "Settle up"}
+                      </Button>
+                    </div>
                   </div>
+                  {settlementHistory.length > 0 && (
+                    <div className="mt-6 space-y-2 rounded-2xl border border-border/40 bg-card/60 px-5 py-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Recent settle ups
+                      </p>
+                      <div className="space-y-2">
+                        {settlementHistory.map((settlement) => {
+                          const amountLabel = currencyFormatter.format(Math.abs(settlement.balanceSnapshot))
+                          const direction = settlement.balanceSnapshot >= 0 ? `${partnerName} owed you ${amountLabel}` : `You owed ${partnerName} ${amountLabel}`
+                          return (
+                            <div
+                              key={settlement.id}
+                              className="flex items-center justify-between rounded-xl bg-background/70 px-3 py-2 text-xs"
+                            >
+                              <div>
+                                <p className="font-semibold">{direction}</p>
+                                <p className="text-muted-foreground">
+                                  Settled by {settlement.settledBy.name || settlement.settledBy.email}
+                                </p>
+                              </div>
+                              <span className="text-muted-foreground">
+                                {new Date(settlement.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
@@ -420,7 +539,7 @@ export default function Dashboard() {
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                         Total tracked
                       </p>
-                      <p className="text-3xl font-semibold bg-gradient-to-br from-primary to-emerald-500 bg-clip-text text-transparent">
+                      <p className="text-3xl font-semibold bg-linear-to-br from-primary to-emerald-500 bg-clip-text text-transparent">
                         {currencyFormatter.format(totalAmount)}
                       </p>
                     </div>
@@ -446,6 +565,7 @@ export default function Dashboard() {
                           key={tx.id}
                           transaction={tx}
                           onDelete={handleDelete}
+                          currentUserId={currentUserId}
                         />
                       ))}
                     </AnimatePresence>
@@ -460,22 +580,29 @@ export default function Dashboard() {
             {/* Filters */}
             <motion.div variants={itemVariants}>
               <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-lg">Quick filters</CardTitle>
+                <CardHeader className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-5 w-5 text-primary" />
+                      <CardTitle className="text-lg">Quick filters</CardTitle>
+                    </div>
+                    <CardDescription>
+                      Zero in on a category, a date range, or shared moments.
+                    </CardDescription>
                   </div>
-                  <CardDescription>
-                    Tune your view between personal and shared memories.
-                  </CardDescription>
+                  <Button variant="ghost" size="sm" onClick={resetFilters}>
+                    Reset
+                  </Button>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-5">
                   <div>
                     <Label htmlFor="category-filter" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       Category
                     </Label>
                     <select
                       id="category-filter"
+                      aria-label="Filter expenses by category"
+                      title="Filter expenses by category"
                       value={selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value)}
                       className="input-soft mt-2"
@@ -488,21 +615,72 @@ export default function Dashboard() {
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <Label htmlFor="view-filter" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      View mode
-                    </Label>
-                    <select
-                      id="view-filter"
-                      value={viewFilter}
-                      onChange={(e) => setViewFilter(e.target.value)}
-                      className="input-soft mt-2"
-                    >
-                      <option value="all">All expenses</option>
-                      <option value="personal">Personal only</option>
-                      <option value="shared">Shared only</option>
-                    </select>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="start-date-filter" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        From
+                      </Label>
+                      <Input
+                        id="start-date-filter"
+                        type="date"
+                        aria-label="Filter expenses starting date"
+                        title="Filter expenses starting date"
+                        value={dateRange.start}
+                        onChange={(e) =>
+                          setDateRange((prev) => ({ ...prev, start: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="end-date-filter" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        To
+                      </Label>
+                      <Input
+                        id="end-date-filter"
+                        type="date"
+                        aria-label="Filter expenses ending date"
+                        title="Filter expenses ending date"
+                        value={dateRange.end}
+                        onChange={(e) =>
+                          setDateRange((prev) => ({ ...prev, end: e.target.value }))
+                        }
+                      />
+                    </div>
                   </div>
+                  {isCoupleMode ? (
+                    <div>
+                      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        View mode
+                      </Label>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                        {viewOptions.map((option) => {
+                          const active = viewMode === option.value
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              className={cn(
+                                "rounded-2xl border px-3 py-2 text-left transition",
+                                active
+                                  ? "border-primary bg-primary/10 text-primary"
+                                  : "border-border/60 hover:border-primary/40"
+                              )}
+                              onClick={() => setViewMode(option.value)}
+                            >
+                              <p className="text-sm font-semibold">{option.label}</p>
+                              <p className="text-[0.7rem] text-muted-foreground">
+                                {option.description}
+                              </p>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Couple filters unlock automatically after you invite your partner.
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
@@ -537,6 +715,7 @@ export default function Dashboard() {
                             value={formData.amount}
                             onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                             placeholder="Eg. 42.50"
+                            title="Enter the amount you spent"
                             required
                           />
                         </div>
@@ -548,6 +727,7 @@ export default function Dashboard() {
                             type="date"
                             value={formData.date}
                             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                            title="Select the date of this expense"
                             required
                           />
                         </div>
@@ -560,6 +740,7 @@ export default function Dashboard() {
                             value={formData.description}
                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             placeholder="Dinner at Amara, groceries..."
+                            title="Describe the expense"
                             required
                           />
                         </div>
@@ -567,6 +748,8 @@ export default function Dashboard() {
                           <Label htmlFor="category">Category</Label>
                           <select
                             id="category"
+                            aria-label="Choose a category for this expense"
+                            title="Choose a category for this expense"
                             value={formData.categoryId}
                             onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                             className="input-soft mt-2"
@@ -583,23 +766,52 @@ export default function Dashboard() {
 
                         {isCoupleMode && (
                           <div className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-4">
-                            <div className="flex items-center gap-3">
-                              <input
-                                id="shared"
-                                type="checkbox"
-                                checked={formData.isShared}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    isShared: e.target.checked,
-                                    paidBy: e.target.checked ? currentUserId : "",
-                                  })
+                            <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                              Expense type
+                            </Label>
+                            <div className="mt-3 grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    isShared: false,
+                                    paidBy: "",
+                                  }))
                                 }
-                                className="h-4 w-4 rounded border-primary/30 text-primary focus:ring-primary"
-                              />
-                              <Label htmlFor="shared" className="text-sm font-medium">
-                                This one is for both of us
-                              </Label>
+                                className={cn(
+                                  "rounded-2xl border px-3 py-2 text-left text-sm font-semibold transition",
+                                  !formData.isShared
+                                    ? "border-emerald-500 bg-emerald-500/10 text-emerald-700"
+                                    : "border-border/70"
+                                )}
+                              >
+                                Personal
+                                <p className="text-[0.7rem] font-normal text-muted-foreground">
+                                  Only you will see it
+                                </p>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    isShared: true,
+                                    paidBy: prev.paidBy || currentUserId,
+                                  }))
+                                }
+                                className={cn(
+                                  "rounded-2xl border px-3 py-2 text-left text-sm font-semibold transition",
+                                  formData.isShared
+                                    ? "border-primary bg-primary/10 text-primary"
+                                    : "border-border/70"
+                                )}
+                              >
+                                Shared
+                                <p className="text-[0.7rem] font-normal text-muted-foreground">
+                                  Visible to both of you
+                                </p>
+                              </button>
                             </div>
 
                             {formData.isShared && (
@@ -609,15 +821,19 @@ export default function Dashboard() {
                                 </Label>
                                 <select
                                   id="paid-by"
+                                  aria-label="Select who paid for the shared expense"
+                                  title="Select who paid for the shared expense"
                                   value={formData.paidBy}
                                   onChange={(e) => setFormData({ ...formData, paidBy: e.target.value })}
                                   className="input-soft mt-2"
                                   required
                                 >
-                                  <option value="">Select who paid</option>
-                                  <option value={currentUserId}>I did</option>
-                                  <option value="partner">My partner</option>
-                                  <option value="split">We split it 50/50</option>
+                                  <option value="">Choose who paid</option>
+                                  <option value={currentUserId}>{currentUserName || "I did"}</option>
+                                  {partnerId && (
+                                    <option value={partnerId}>{partnerName}</option>
+                                  )}
+                                  <option value="split">Split 50/50</option>
                                 </select>
                               </div>
                             )}
@@ -699,13 +915,21 @@ function StatsCard({ icon, label, value, color = "default" }: {
   )
 }
 
-function TransactionCard({ transaction, onDelete }: { 
+function TransactionCard({
+  transaction,
+  onDelete,
+  currentUserId,
+}: {
   transaction: Transaction
-  onDelete: (id: string) => void 
+  onDelete: (id: string) => void
+  currentUserId: string
 }) {
   const dateLabel = new Date(transaction.date).toLocaleDateString()
   const amountLabel = currencyFormatter.format(transaction.amount)
-  const loggedBy = transaction.user?.name || transaction.user?.email || "You"
+  const ownerIsMe = transaction.user?.id === currentUserId
+  const loggedBy = ownerIsMe
+    ? "You"
+    : transaction.user?.name || transaction.user?.email || "Partner"
 
   return (
     <motion.article

@@ -36,10 +36,11 @@ export async function GET() {
         ? partnerLink.user2Id
         : partnerLink.user1Id
 
-    // Get all shared transactions for both users
+    // Get all shared transactions for both users that are not settled
     const sharedTransactions = await prisma.transaction.findMany({
       where: {
         isShared: true,
+        settlementId: null,
         OR: [{ userId: session.user.id }, { userId: partnerId }],
       },
       include: {
@@ -62,7 +63,7 @@ export async function GET() {
       } else if (tx.paidBy === partnerId) {
         partnerPaid += amount
       } else if (tx.paidBy === "partner") {
-        // If creator marked as "partner" paid
+        // Legacy entries may still store "partner" instead of ids
         if (tx.userId === session.user.id) {
           partnerPaid += amount
         } else {
@@ -88,6 +89,15 @@ export async function GET() {
         ? partnerLink.user1
         : partnerLink.user2
 
+    const recentSettlements = await prisma.settlement.findMany({
+      where: { partnerLinkId: partnerLink.id },
+      include: {
+        settledBy: { select: { id: true, name: true, email: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    })
+
     return NextResponse.json({
       totalShared,
       myPaid,
@@ -96,6 +106,13 @@ export async function GET() {
       balance,
       partnerInfo,
       transactionCount: sharedTransactions.length,
+      partnerLinkId: partnerLink.id,
+      recentSettlements: recentSettlements.map((settlement) => ({
+        id: settlement.id,
+        balanceSnapshot: settlement.balanceSnapshot,
+        createdAt: settlement.createdAt,
+        settledBy: settlement.settledBy,
+      })),
     })
   } catch (error) {
     console.error("Error calculating balance:", error)

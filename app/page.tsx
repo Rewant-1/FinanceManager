@@ -111,15 +111,17 @@ export default function Home() {
               </span>
             </motion.h1>
 
-            <motion.p
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.5 }}
-              className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground sm:text-lg md:text-xl"
             >
-              The beautiful way for couples to manage personal and shared expenses. 
-              No awkward money talks, just clarity and balance.
-            </motion.p>
+              <TextGenerateEffect
+                className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground sm:text-lg md:text-xl"
+                words="The beautiful way for couples to manage personal and shared expenses. No awkward money talks, just clarity and balance."
+                duration={0.7}
+              />
+            </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -235,13 +237,13 @@ export default function Home() {
             <ProcessStep
               step="2"
               title="Invite Your Partner"
-              description="Share a simple invite link. They join with one click and you're connected."
+              description="Share a simple invite link. They join with one click and you&rsquo;re connected."
               icon={<Users className="h-6 w-6" />}
             />
             <ProcessStep
               step="3"
               title="Track Together"
-              description="Log expenses, mark what's shared, and see who owes what—automatically."
+              description="Log expenses, mark what&rsquo;s shared, and see who owes what—automatically."
               icon={<BarChart3 className="h-6 w-6" />}
             />
           </div>
@@ -256,13 +258,13 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="rounded-3xl bg-gradient-to-br from-primary/10 via-emerald-500/10 to-teal-500/10 border border-primary/20 p-8 sm:p-12 text-center"
+            className="rounded-3xl bg-linear-to-br from-primary/10 via-emerald-500/10 to-teal-500/10 border border-primary/20 p-8 sm:p-12 text-center"
           >
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
               Ready to start your story?
             </h2>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-              Join thousands of couples who've found financial clarity together.
+              Join thousands of couples who&rsquo;ve found financial clarity together.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
               <Button asChild size="lg" className="w-full sm:w-auto group">

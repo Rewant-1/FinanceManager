@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ModeToggle } from "@/components/mode-toggle"
+import { PatternBackdrop } from "@/components/ui/pattern-backdrop"
 
 type User = {
   id: string
@@ -157,9 +158,15 @@ export default function SettingsPage() {
   return (
     <div className="relative min-h-screen px-6 pb-24 pt-24 sm:px-10">
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="hero-blob-lg absolute -left-32 top-24 rounded-full bg-gradient-to-br from-indigo-500/20 via-purple-500/10 to-transparent blur-3xl" />
-        <div className="hero-blob-md absolute right-[-140px] bottom-0 rounded-full bg-gradient-to-br from-pink-500/15 via-blue-500/15 to-transparent blur-3xl" />
+        <div className="hero-blob-lg absolute -left-32 top-24 rounded-full bg-linear-to-br from-emerald-500/25 via-teal-500/15 to-transparent blur-3xl" />
+        <div className="hero-blob-md absolute right-[-140px] bottom-0 rounded-full bg-linear-to-br from-cyan-500/20 via-sky-500/15 to-transparent blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,hsla(173,85%,38%,0.18),transparent_60%)]" />
       </div>
+      <PatternBackdrop
+        rounded={false}
+        className="hidden lg:block opacity-60"
+        overlayClassName="from-emerald-500/15 via-transparent to-[#031b16]/80"
+      />
 
       <motion.div
         className="relative mx-auto flex w-full max-w-5xl flex-col gap-8"
@@ -228,7 +235,7 @@ export default function SettingsPage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="rounded-2xl bg-gradient-to-br from-primary/5 via-purple-500/5 to-pink-500/5 border border-primary/10 px-6 py-5 text-sm"
+                    className="rounded-2xl bg-linear-to-br from-primary/5 via-emerald-500/10 to-cyan-500/5 border border-primary/10 px-6 py-5 text-sm"
                   >
                     <p className="flex items-center gap-2">
                       <Users className="h-4 w-4 text-primary" />

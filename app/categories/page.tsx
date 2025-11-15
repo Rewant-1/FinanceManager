@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ModeToggle } from "@/components/mode-toggle"
+import { PatternBackdrop } from "@/components/ui/pattern-backdrop"
 
 type Category = {
   id: string
@@ -152,9 +153,15 @@ export default function CategoriesPage() {
   return (
     <div className="relative min-h-screen px-6 pb-24 pt-24 sm:px-10">
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="hero-blob-lg absolute -left-32 top-24 rounded-full bg-gradient-to-br from-indigo-500/20 via-purple-500/10 to-transparent blur-3xl" />
-        <div className="hero-blob-md absolute right-[-140px] bottom-0 rounded-full bg-gradient-to-br from-pink-500/15 via-blue-500/15 to-transparent blur-3xl" />
+        <div className="hero-blob-lg absolute -left-32 top-24 rounded-full bg-linear-to-br from-emerald-500/20 via-teal-500/15 to-transparent blur-3xl" />
+        <div className="hero-blob-md absolute right-[-140px] bottom-0 rounded-full bg-linear-to-br from-cyan-500/20 via-sky-500/15 to-transparent blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,hsla(173,80%,38%,0.18),transparent_65%)]" />
       </div>
+      <PatternBackdrop
+        rounded={false}
+        className="hidden lg:block opacity-60"
+        overlayClassName="from-emerald-500/15 via-transparent to-[#031d17]/80"
+      />
 
       <motion.div
         className="relative mx-auto flex w-full max-w-4xl flex-col gap-8"

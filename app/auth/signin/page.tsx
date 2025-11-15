@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Spotlight } from "@/components/ui/spotlight"
+import { PatternBackdrop } from "@/components/ui/pattern-backdrop"
 
 function SignInForm() {
   const router = useRouter()
@@ -57,9 +58,15 @@ function SignInForm() {
     <div className="relative flex min-h-screen items-center justify-center px-6 py-24">
       <div className="absolute inset-0 -z-10 overflow-hidden">
         <Spotlight className="-top-40 left-0 md:left-60 md:-top-20" fill="hsl(var(--primary))" />
-        <div className="hero-blob-lg absolute -left-20 top-20 rounded-full bg-gradient-to-br from-primary/20 via-purple-500/10 to-transparent blur-3xl" />
-        <div className="hero-blob-md absolute -right-16 bottom-10 rounded-full bg-gradient-to-br from-indigo-500/20 via-blue-500/10 to-transparent blur-3xl" />
+        <div className="hero-blob-lg absolute -left-20 top-20 rounded-full bg-linear-to-br from-emerald-500/20 via-teal-500/15 to-transparent blur-3xl" />
+        <div className="hero-blob-md absolute -right-16 bottom-10 rounded-full bg-linear-to-br from-cyan-500/20 via-sky-500/10 to-transparent blur-3xl" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,hsla(173,70%,40%,0.15),transparent_70%)]" />
       </div>
+      <PatternBackdrop
+        rounded={false}
+        className="hidden md:block opacity-70"
+        overlayClassName="from-emerald-500/20 via-transparent to-[#031913]/80"
+      />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}

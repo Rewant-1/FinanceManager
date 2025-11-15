@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Couple's Expense Hub",
-  description: "An elegant personal and shared expense tracker for couples.",
+  title: "OurStory",
+  description: "A premium ledger for personal and shared spending.",
 };
 
 export default function RootLayout({

@@ -2,12 +2,14 @@ import { compare } from "bcryptjs"
 import { getServerSession, type NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 
+import { env } from "@/lib/env"
 import prisma from "@/lib/prisma"
 
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
+  secret: env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/auth/signin",
   },

@@ -10,6 +10,7 @@ A gorgeous, elegant personal and shared expense tracker built for couples. Track
 ## ✨ Features
 
 ### 🎨 Beautiful UI
+
 - **shadcn/ui** components for a polished, accessible interface
 - **Aceternity UI** components for stunning visual effects
 - **Recharts** for beautiful data visualizations
@@ -19,6 +20,7 @@ A gorgeous, elegant personal and shared expense tracker built for couples. Track
 - Dark mode support with seamless theme switching
 
 ### 💰 Expense Management
+
 - Personal expense tracking
 - Shared expense mode for couples
 - Category management
@@ -27,6 +29,7 @@ A gorgeous, elegant personal and shared expense tracker built for couples. Track
 - Automatic settlement suggestions
 
 ### 📊 Analytics & Insights
+
 - **Monthly spending trends** with interactive line charts
 - **Transaction volume** tracking with bar charts
 - **Category breakdown** with beautiful pie charts
@@ -35,6 +38,7 @@ A gorgeous, elegant personal and shared expense tracker built for couples. Track
 - **Detailed category analysis** with color-coded insights
 
 ### 👥 Couple Features
+
 - Partner invitation system
 - Toggle between personal and couple mode
 - Track who paid for shared expenses
@@ -42,6 +46,7 @@ A gorgeous, elegant personal and shared expense tracker built for couples. Track
 - Fair settlement calculations
 
 ### ♿ Accessibility
+
 - Full keyboard navigation
 - Screen reader support
 - ARIA labels throughout
@@ -49,6 +54,7 @@ A gorgeous, elegant personal and shared expense tracker built for couples. Track
 - High contrast mode compatible
 
 ### 📱 Responsive Design
+
 - Mobile-first approach
 - Touch-friendly interactions
 - Adaptive layouts for all screen sizes
@@ -81,8 +87,11 @@ npm install
 cp .env.example .env.local
 # Edit .env.local with your database URL and NextAuth secret
 
-# Run database migrations
+# Run database migrations for local development
 npx prisma migrate dev
+
+# When targeting production/preview databases
+npm run db:migrate
 
 # Start the development server
 npm run dev
@@ -98,9 +107,12 @@ NEXTAUTH_SECRET="your-secret-here"
 NEXTAUTH_URL="http://localhost:3000"
 ```
 
+> **Tip:** Copy `.env.example` to jump-start your configuration.
+
 ## 🎨 Component Library
 
 ### shadcn/ui Components
+
 - `Button` - Multiple variants (default, secondary, outline, ghost, destructive)
 - `Card` - Card layouts with header, content, and footer
 - `Input` - Form inputs with modern styling
@@ -108,12 +120,14 @@ NEXTAUTH_URL="http://localhost:3000"
 - `Toaster` - Toast notifications
 
 ### Aceternity UI Components
+
 - `Spotlight` - Animated spotlight effect
 - `TextGenerateEffect` - Typewriter-style text animation
 - `HoverEffect` - Card hover animations
 - `BackgroundGradientAnimation` - Animated gradient backgrounds
 
 ### Custom Components
+
 - `ModeToggle` - Dark/light mode switcher
 - `ThemeProvider` - Theme management wrapper
 - `StatsCard` - Animated statistics display
@@ -122,12 +136,14 @@ NEXTAUTH_URL="http://localhost:3000"
 ## 🎯 Key Pages
 
 ### Home (`/`)
+
 - Hero section with spotlight effect
 - Feature cards with hover effects
 - Statistics display
 - Theme toggle
 
 ### Dashboard (`/dashboard`)
+
 - Transaction list with animations
 - Balance overview (couple mode)
 - Quick filters
@@ -136,6 +152,7 @@ NEXTAUTH_URL="http://localhost:3000"
 - Navigation to Analytics
 
 ### Analytics (`/analytics`)
+
 - Monthly spending trends line chart
 - Transaction volume bar charts
 - Category breakdown pie charts
@@ -145,18 +162,21 @@ NEXTAUTH_URL="http://localhost:3000"
 - Interactive data tooltips
 
 ### Categories (`/categories`)
+
 - CRUD operations for categories
 - Inline editing
 - Delete confirmations
 - Empty states
 
 ### Settings (`/settings`)
+
 - Partner invitation system
 - Couple mode management
 - Pending invites
 - Account status
 
 ### Authentication
+
 - Sign in (`/auth/signin`)
 - Sign up (`/auth/signup`)
 - Animated forms
@@ -165,6 +185,7 @@ NEXTAUTH_URL="http://localhost:3000"
 ## 🌓 Dark Mode
 
 The app supports both light and dark modes with:
+
 - System preference detection
 - Manual toggle
 - Smooth transitions
@@ -192,6 +213,7 @@ The app supports both light and dark modes with:
 ## 🎬 Animations
 
 All animations are carefully crafted using Framer Motion:
+
 - Page transitions with stagger effects
 - Enter/exit animations
 - Hover states
@@ -219,11 +241,24 @@ npm run lint
 
 # Build for production
 npm run build
+
+# Apply migrations to the current DATABASE_URL
+npm run db:migrate
+
+# Optional: ping the health check once deployed
+curl -s https://your-domain.vercel.app/api/health
 ```
+
+## ✅ Production Checklist
+
+- [ ] `DATABASE_URL`, `NEXTAUTH_SECRET`, and `NEXTAUTH_URL` are set in Vercel/hosted envs
+- [ ] `npm run db:migrate` (or `prisma migrate deploy`) executed against the production database
+- [ ] `npm run build` succeeds locally before deploying
+- [ ] `/api/health` returns `{ ok: true }` once deployed
+- [ ] At least one manual smoke-test: sign up, sign in, add transaction, invite partner
 
 ## 📈 Future Enhancements
 
-- [ ] Advanced filtering and date ranges
 - [ ] Export to CSV/PDF
 - [ ] Budget tracking and alerts
 - [ ] Receipt photo uploads

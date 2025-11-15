@@ -3,19 +3,18 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
 export const BackgroundGradientAnimation = ({
-  gradientBackgroundStart = "rgb(108, 0, 162)",
-  gradientBackgroundEnd = "rgb(0, 17, 82)",
-  firstColor = "99, 102, 241",
-  secondColor = "168, 85, 247",
-  thirdColor = "236, 72, 153",
-  fourthColor = "59, 130, 246",
-  fifthColor = "147, 51, 234",
-  pointerColor = "140, 100, 255",
+  gradientBackgroundStart = "rgb(4, 45, 63)",
+  gradientBackgroundEnd = "rgb(3, 20, 25)",
+  firstColor = "38, 182, 164",
+  secondColor = "14, 116, 144",
+  thirdColor = "247, 181, 104",
+  fourthColor = "6, 95, 70",
+  fifthColor = "15, 118, 110",
+  pointerColor = "242, 201, 76",
   size = "80%",
   blendingValue = "hard-light",
   children,
   className,
-  interactive = true,
   containerClassName,
 }: {
   gradientBackgroundStart?: string;
@@ -30,7 +29,6 @@ export const BackgroundGradientAnimation = ({
   blendingValue?: string;
   children?: React.ReactNode;
   className?: string;
-  interactive?: boolean;
   containerClassName?: string;
 }) => {
   return (
