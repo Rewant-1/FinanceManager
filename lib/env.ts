@@ -15,7 +15,20 @@ function ensureEnv(key: string, devFallback?: string) {
   return value
 }
 
-const databaseUrl = ensureEnv("DATABASE_URL", "file:./dev.db")
+function ensureDatabaseUrl() {
+  const url = ensureEnv("DATABASE_URL")
+  const isPostgres = /^postgres(ql)?:\/\//i.test(url)
+
+  if (!isPostgres) {
+    throw new Error(
+      "DATABASE_URL must start with 'postgresql://' or 'postgres://'. Check your .env and deployment settings."
+    )
+  }
+
+  return url
+}
+
+const databaseUrl = ensureDatabaseUrl()
 const directDatabaseUrl = process.env.DIRECT_DATABASE_URL ?? databaseUrl
 
 export const env = {

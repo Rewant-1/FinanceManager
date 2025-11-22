@@ -22,12 +22,6 @@
 4. Copy the connection string
 5. Connection string format: `postgresql://user:pass@host/dbname?sslmode=require`
 
-#### Option C: Supabase (Free Tier)
-1. Go to https://supabase.com
-2. Create new project
-3. Go to Settings → Database
-4. Copy "Connection string" (Transaction pooling for production)
-
 ### Step 2: Deploy to Vercel
 
 1. **Push to GitHub**
