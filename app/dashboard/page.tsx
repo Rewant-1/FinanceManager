@@ -1,14 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { signOut } from "next-auth/react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 import { 
-  LogOut, Settings, Tags, Plus, Trash2, 
+  LogOut, Settings, Tags, Plus, Trash2, Edit, 
   Filter, TrendingUp, DollarSign, Users,
-  Calendar, User, CreditCard, BarChart3
+  Calendar, User, CreditCard, BarChart3, ChevronLeft, ChevronRight
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -17,7 +17,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ModeToggle } from "@/components/mode-toggle"
 import { PatternBackdrop } from "@/components/ui/pattern-backdrop"
-import { cn } from "@/lib/utils"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { cn, formatCurrency, getMonthDateRange, formatMonthYear } from "@/lib/utils"
 
 type Category = {
   id: string
@@ -69,12 +72,6 @@ type BalanceInfo = {
 
 type ViewMode = "all" | "personal" | "shared"
 
-const currencyFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-  minimumFractionDigits: 2,
-})
-
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -104,7 +101,8 @@ export default function Dashboard() {
   // Filter states
   const [selectedCategory, setSelectedCategory] = useState<string>("")
   const [viewMode, setViewMode] = useState<ViewMode>("personal")
-  const [dateRange, setDateRange] = useState({ start: "", end: "" })
+  const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [dateRange, setDateRange] = useState(() => getMonthDateRange(new Date()))
 
   // Form states
   const [formData, setFormData] = useState({
@@ -115,6 +113,11 @@ export default function Dashboard() {
     isShared: false,
     paidBy: "",
   })
+  
+  // Dialog and editing states
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
+  const amountInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetchPartnerStatus()
@@ -204,9 +207,23 @@ export default function Dashboard() {
   }
 
   function resetFilters() {
+    const now = new Date()
+    setCurrentMonth(now)
     setSelectedCategory("")
-    setDateRange({ start: "", end: "" })
+    setDateRange(getMonthDateRange(now))
     setViewMode(isCoupleMode ? "all" : "personal")
+  }
+
+  function goToPreviousMonth() {
+    const newMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1)
+    setCurrentMonth(newMonth)
+    setDateRange(getMonthDateRange(newMonth))
+  }
+
+  function goToNextMonth() {
+    const newMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1)
+    setCurrentMonth(newMonth)
+    setDateRange(getMonthDateRange(newMonth))
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -271,6 +288,95 @@ export default function Dashboard() {
     } catch (err) {
       console.error("Error deleting transaction:", err)
       toast.error("Failed to delete transaction")
+    }
+  }
+
+  function handleEditOpen(transaction: Transaction) {
+    setEditingTransaction(transaction)
+    setFormData({
+      amount: transaction.amount.toString(),
+      description: transaction.description,
+      date: new Date(transaction.date).toISOString().split("T")[0],
+      categoryId: transaction.category.id,
+      isShared: transaction.isShared,
+      paidBy: transaction.paidBy || "",
+    })
+    setIsDialogOpen(true)
+  }
+
+  function openNewTransactionDialog() {
+    setEditingTransaction(null)
+    setFormData({
+      amount: "",
+      description: "",
+      date: new Date().toISOString().split("T")[0],
+      categoryId: "",
+      isShared: false,
+      paidBy: "",
+    })
+    setIsDialogOpen(true)
+  }
+
+  async function handleDialogSubmit(addAnother: boolean = false) {
+    if (!formData.amount || !formData.description || !formData.categoryId) {
+      toast.error("Please fill in all required fields")
+      return
+    }
+
+    try {
+      const isEditing = editingTransaction !== null
+      const url = isEditing 
+        ? `/api/transactions/${editingTransaction.id}` 
+        : "/api/transactions"
+      const method = isEditing ? "PATCH" : "POST"
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          amount: parseFloat(formData.amount),
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        toast.error(data.error || `Failed to ${isEditing ? 'update' : 'create'} transaction`)
+        return
+      }
+
+      if (isEditing) {
+        setTransactions(transactions.map((t) => t.id === data.id ? data : t))
+        toast.success("Transaction updated!")
+      } else {
+        setTransactions([data, ...transactions])
+        toast.success("Transaction added!")
+      }
+      
+      if (data.isShared && isCoupleMode) {
+        fetchBalance()
+      }
+
+      if (addAnother) {
+        // Reset form but keep dialog open
+        setFormData({
+          amount: "",
+          description: "",
+          date: new Date().toISOString().split("T")[0],
+          categoryId: formData.categoryId, // Keep same category
+          isShared: formData.isShared, // Keep same shared setting
+          paidBy: formData.paidBy,
+        })
+        setEditingTransaction(null)
+        setTimeout(() => amountInputRef.current?.focus(), 100)
+      } else {
+        setIsDialogOpen(false)
+        setEditingTransaction(null)
+      }
+    } catch (err) {
+      toast.error("Something went wrong")
+      console.error(err)
     }
   }
 
@@ -431,19 +537,19 @@ export default function Dashboard() {
                     <StatsCard
                       icon={<TrendingUp className="h-5 w-5" />}
                       label="Total shared"
-                      value={currencyFormatter.format(balanceInfo.totalShared)}
+                      value={formatCurrency(balanceInfo.totalShared)}
                       color="default"
                     />
                     <StatsCard
-                      icon={<DollarSign className="h-5 w-5" />}
+                      icon={<span className="text-lg font-bold">₹</span>}
                       label="You covered"
-                      value={currencyFormatter.format(balanceInfo.myPaid)}
+                      value={formatCurrency(balanceInfo.myPaid)}
                       color="indigo"
                     />
                     <StatsCard
-                      icon={<DollarSign className="h-5 w-5" />}
+                      icon={<span className="text-lg font-bold">₹</span>}
                       label="Partner covered"
-                      value={currencyFormatter.format(balanceInfo.partnerPaid)}
+                      value={formatCurrency(balanceInfo.partnerPaid)}
                       color="emerald"
                     />
                     <StatsCard
@@ -458,7 +564,7 @@ export default function Dashboard() {
                       <span>
                         <span className="font-semibold text-emerald-600">{partnerName}</span> owes you
                         <span className="ml-2 font-semibold text-emerald-600">
-                          {currencyFormatter.format(Math.abs(balanceInfo.balance))}
+                          {formatCurrency(Math.abs(balanceInfo.balance))}
                         </span>
                       </span>
                     ) : balanceInfo.balance < 0 ? (
@@ -466,7 +572,7 @@ export default function Dashboard() {
                         You owe
                         <span className="mx-2 font-semibold text-rose-600">{partnerName}</span>
                         <span className="font-semibold text-rose-600">
-                          {currencyFormatter.format(Math.abs(balanceInfo.balance))}
+                          {formatCurrency(Math.abs(balanceInfo.balance))}
                         </span>
                       </span>
                     ) : (
@@ -493,7 +599,7 @@ export default function Dashboard() {
                       </p>
                       <div className="space-y-2">
                         {settlementHistory.map((settlement) => {
-                          const amountLabel = currencyFormatter.format(Math.abs(settlement.balanceSnapshot))
+                          const amountLabel = formatCurrency(Math.abs(settlement.balanceSnapshot))
                           const direction = settlement.balanceSnapshot >= 0 ? `${partnerName} owed you ${amountLabel}` : `You owed ${partnerName} ${amountLabel}`
                           return (
                             <div
@@ -537,17 +643,24 @@ export default function Dashboard() {
                   <div className="flex flex-col items-end gap-3">
                     <div className="text-right">
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Total tracked
+                        {formatMonthYear(currentMonth)} Total
                       </p>
                       <p className="text-3xl font-semibold bg-linear-to-br from-primary to-emerald-500 bg-clip-text text-transparent">
-                        {currencyFormatter.format(totalAmount)}
+                        {formatCurrency(totalAmount)}
                       </p>
                     </div>
-                    <Button
-                      onClick={() => setShowAddForm((prev) => !prev)}
-                    >
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="sm" onClick={goToPreviousMonth}>
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm font-medium min-w-28 text-center">{formatMonthYear(currentMonth)}</span>
+                      <Button variant="ghost" size="sm" onClick={goToNextMonth}>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <Button onClick={openNewTransactionDialog}>
                       <Plus className="mr-2 h-4 w-4" />
-                      {showAddForm ? "Close form" : "Log transaction"}
+                      Log transaction
                     </Button>
                   </div>
                 </div>
@@ -565,6 +678,7 @@ export default function Dashboard() {
                           key={tx.id}
                           transaction={tx}
                           onDelete={handleDelete}
+                          onEdit={handleEditOpen}
                           currentUserId={currentUserId}
                         />
                       ))}
@@ -880,6 +994,130 @@ export default function Dashboard() {
           </aside>
         </div>
       </motion.div>
+
+      {/* Transaction Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingTransaction ? "Edit Transaction" : "Add Transaction"}</DialogTitle>
+            <DialogDescription>
+              {editingTransaction ? "Update the details below." : "Fill in the details to log your expense."}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); handleDialogSubmit(); }} className="space-y-4">
+            <div>
+              <Label htmlFor="dialog-amount">Amount (₹)</Label>
+              <Input
+                ref={amountInputRef}
+                id="dialog-amount"
+                type="number"
+                step="0.01"
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                placeholder="Eg. 500"
+                autoFocus
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="dialog-description">Description</Label>
+              <Input
+                id="dialog-description"
+                type="text"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Dinner, groceries..."
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="dialog-date">Date</Label>
+              <Input
+                id="dialog-date"
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="dialog-category">Category</Label>
+              <Select value={formData.categoryId} onValueChange={(val) => setFormData({ ...formData, categoryId: val })}>
+                <SelectTrigger id="dialog-category">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {isCoupleMode && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Expense type
+                </Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, isShared: false, paidBy: "" }))}
+                    className={cn(
+                      "rounded-xl border px-3 py-2 text-left text-sm font-semibold transition",
+                      !formData.isShared
+                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-700"
+                        : "border-border/70"
+                    )}
+                  >
+                    Personal
+                    <p className="text-[0.7rem] font-normal text-muted-foreground">Only you will see it</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, isShared: true, paidBy: prev.paidBy || currentUserId }))}
+                    className={cn(
+                      "rounded-xl border px-3 py-2 text-left text-sm font-semibold transition",
+                      formData.isShared
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border/70"
+                    )}
+                  >
+                    Shared
+                    <p className="text-[0.7rem] font-normal text-muted-foreground">Visible to both of you</p>
+                  </button>
+                </div>
+                {formData.isShared && (
+                  <div>
+                    <Label htmlFor="dialog-paidby" className="text-xs">Who picked up the bill?</Label>
+                    <Select value={formData.paidBy} onValueChange={(val) => setFormData({ ...formData, paidBy: val })}>
+                      <SelectTrigger id="dialog-paidby">
+                        <SelectValue placeholder="Choose who paid" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={currentUserId}>{currentUserName || "I did"}</SelectItem>
+                        {partnerId && <SelectItem value={partnerId}>{partnerName}</SelectItem>}
+                        <SelectItem value="split">Split 50/50</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <DialogFooter className="gap-2 pt-4">
+              {!editingTransaction && (
+                <Button type="button" variant="secondary" onClick={() => handleDialogSubmit(true)}>
+                  Save & Add Another
+                </Button>
+              )}
+              <Button type="submit">
+                {editingTransaction ? "Update" : "Save"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
@@ -918,14 +1156,16 @@ function StatsCard({ icon, label, value, color = "default" }: {
 function TransactionCard({
   transaction,
   onDelete,
+  onEdit,
   currentUserId,
 }: {
   transaction: Transaction
   onDelete: (id: string) => void
+  onEdit: (transaction: Transaction) => void
   currentUserId: string
 }) {
-  const dateLabel = new Date(transaction.date).toLocaleDateString()
-  const amountLabel = currencyFormatter.format(transaction.amount)
+  const dateLabel = new Date(transaction.date).toLocaleDateString("en-IN")
+  const amountLabel = formatCurrency(transaction.amount)
   const ownerIsMe = transaction.user?.id === currentUserId
   const loggedBy = ownerIsMe
     ? "You"
@@ -969,23 +1209,47 @@ function TransactionCard({
           </span>
         </div>
       </div>
-      <div className="flex items-center gap-4 text-right">
-        <span className="text-lg font-semibold">
+      <div className="flex items-center gap-2 text-right">
+        <span className="text-lg font-semibold mr-2">
           {amountLabel}
         </span>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            if (confirm("Delete this transaction?")) {
-              onDelete(transaction.id)
-            }
-          }}
-          className="border border-destructive/20 text-destructive hover:bg-destructive/10"
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Delete
-        </Button>
+        {ownerIsMe && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onEdit(transaction)}
+            className="border border-primary/20 text-primary hover:bg-primary/10"
+          >
+            <Edit className="mr-2 h-4 w-4" />
+            Edit
+          </Button>
+        )}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="border border-destructive/20 text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this transaction?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete "{transaction.description}" ({amountLabel}). This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => onDelete(transaction.id)}>
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </motion.article>
   )
